@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Dashboard User</title>
+    <style>
+        body {
+            font-family: Arial;
+            background: #f4f6f9;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 700px;
+            margin: auto;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+
+        h2 {
+            text-align: center;
+        }
+
+        button {
+            padding: 8px 12px;
+            margin: 5px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .btn {
+            background: #007bff;
+            color: white;
+        }
+
+        .btn-success {
+            background: green;
+            color: white;
+        }
+
+        .btn-danger {
+            background: red;
+            color: white;
+        }
+
+        input {
+            padding: 8px;
+            width: 70%;
+            margin-right: 5px;
+        }
+
+        .card {
+            margin-top: 15px;
+            padding: 10px;
+            border-bottom: 1px solid #ddd;
+        }
+
+        #timer {
+            text-align: center;
+            margin-top: 15px;
+            font-weight: bold;
+            color: red;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+
+<h2>Dashboard User</h2>
+
+<p><b>Login sebagai:</b> User</p>
+
+<h3>Export Report</h3>
+<button class="btn" onclick="exportExcel()">Export Excel</button>
+<button class="btn-success" onclick="exportPDF()">Export PDF</button>
+
+<h3>Search User</h3>
+<input type="text" id="search" placeholder="Cari nama/email">
+<button class="btn" onclick="loadUsers()">Cari</button>
+
+<h3>Data User</h3>
+<div id="data"></div>
+
+<button class="btn" onclick="prevPage()">Prev</button>
+<button class="btn" onclick="nextPage()">Next</button>
+
+<h3>Upload CSV</h3>
+<form id="uploadForm">
+    <input type="file" name="file" required>
+    <button class="btn-success">Upload</button>
+</form>
+
+<h3 id="timer"></h3>
+
+</div>
+
+<script>
+let page = 1;
+
+function loadUsers() {
+    let search = document.getElementById("search").value;
+
+    fetch(`/api/users?page=${page}&search=${search}`)
+    .then(res => res.json())
+    .then(data => {
+        let html = "";
+        data.data.forEach(u => {
+            html += `<div class="card">${u.name} - ${u.email}</div>`;
+        });
+        document.getElementById("data").innerHTML = html;
+    });
+}
+
+function nextPage() {
+    page++;
+    loadUsers();
+}
+
+function prevPage() {
+    if (page > 1) page--;
+    loadUsers();
+}
+
+function exportExcel() {
+    window.location.href = "/api/export/excel";
+}
+
+function exportPDF() {
+    window.location.href = "/api/export/pdf";
+}
+
+document.getElementById("uploadForm").addEventListener("submit", function(e){
+    e.preventDefault();
+
+    let formData = new FormData(this);
+
+    fetch("/api/upload", {
+        method: "POST",
+        body: formData
+    })
+    .then(res => res.json())
+    .then(data => alert(data.message));
+});
+
+// AUTO LOGOUT
+let time = 300;
+setInterval(() => {
+    time--;
+    document.getElementById("timer").innerText =
+        "Logout dalam: " + time + " detik";
+
+    if (time <= 0) {
+        alert("Session habis!");
+        location.reload();
+    }
+}, 1000);
+
+loadUsers();
+</script>
+
+</body>
+</html>
